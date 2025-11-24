@@ -1,17 +1,27 @@
 #include "ChessPieces.h"
+#include <string>
 
-ChessPiece::ChessPiece() { };
+ChessPiece::ChessPiece(std::string _position, PieceColour _colour):
+                        position(_position),
+                        colour(_colour) { };
 
-Pawn::Pawn() { };
+Pawn::Pawn(std::string _position, PieceColour _colour):
+            ChessPiece(_position, _colour) { };
 
-King::King() { };
+King::King(std::string _position, PieceColour _colour): 
+            ChessPiece(_position, _colour) { };
 
-Queen::Queen() { };
+Queen::Queen(std::string _position, PieceColour _colour): 
+            ChessPiece(_position, _colour) { };
 
-Bishop::Bishop() { };
+Bishop::Bishop(std::string _position, PieceColour _colour): 
+            ChessPiece(_position, _colour) { };
 
-Knight::Knight() { };
+Knight::Knight(std::string _position, PieceColour _colour): 
+            ChessPiece(_position, _colour) { };
 
-Rook::Rook() { };
+Rook::Rook(std::string _position, PieceColour _colour): 
+            ChessPiece(_position, _colour) { };
 
-Pawn::Pawn() { };
+Pawn::Pawn(std::string _position, PieceColour _colour): 
+            ChessPiece(_position, _colour) { };

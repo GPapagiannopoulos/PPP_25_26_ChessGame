@@ -1,10 +1,12 @@
+#include <string>
+
 class ChessPiece {
     protected:
-        char position[2];
+        std::string position;
         PieceColour colour;
+        ChessPiece(std::string position, PieceColour colour);
     public:
-        ChessPiece();
-        virtual void makeMove(char target_position[2]) = 0;
+        virtual void makeMove(std::string target_position) = 0;
         void capture();
         void beCaptured();
 };
@@ -13,31 +15,37 @@ enum class PieceColour {w, b};
 
 class King : virtual public ChessPiece {
     public:
-        void makeMove(char target_position[2]) override;
+        King(std::string _position, PieceColour _colour);
+        void makeMove(std::string target_position) override;
         bool isCheck();
 };
 
 class Queen : virtual public ChessPiece {
     public:
-        void makeMove(char target_position[2]) override;
+        Queen(std::string position, PieceColour colour);
+        void makeMove(std::string target_position) override;
 };
 
 class Bishop : virtual public ChessPiece {
     public:
-        void makeMove(char target_position[2]) override;
+        Bishop(std::string position, PieceColour colour);
+        void makeMove(std::string target_position) override;
 };
 
 class Knight : virtual public ChessPiece {
     public:
-        void makeMove(char target_position[2]) override;
+        Knight(std::string position, PieceColour colour);
+        void makeMove(std::string target_position) override;
 };
 
 class Rook : virtual public ChessPiece {
     public:
-        void makeMove(char target_position[2]) override;
+        Rook(std::string position, PieceColour colour);
+        void makeMove(std::string target_position) override;
 };
 
 class Pawn : virtual public ChessPiece {
     public:
-        void makeMove(char target_position[2]) override;
+        Pawn(std::string position, PieceColour colour);
+        void makeMove(std::string target_position) override;
 };
