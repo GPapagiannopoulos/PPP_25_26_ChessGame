@@ -1,6 +1,8 @@
 #include <string>
 #include <iostream>
+
 enum class PieceColour {w, b};
+// PieceType used in testing and debugging  
 enum class PieceType {King, Queen, Bishop, Knight, Rook, Pawn};
 
 std::ostream& operator<<(std::ostream& out, PieceColour colour);

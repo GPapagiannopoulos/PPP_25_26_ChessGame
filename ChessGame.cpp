@@ -4,6 +4,19 @@
 #include <vector>
 #include <iostream>
 
+
+ChessGame::ChessGame(){
+    for (char file = 'A'; file < 'I'; file++) {
+        for (char rank = '1'; rank < '9'; rank++) {
+            std::string coordinates;
+            coordinates += file;
+            coordinates += rank;
+            this->boardState[coordinates] = nullptr;
+        }
+    }
+}
+
+
 std::ostream& operator<<(std::ostream& out, PieceColour colour) {
     switch(colour){
         case(PieceColour::w):
@@ -14,8 +27,8 @@ std::ostream& operator<<(std::ostream& out, PieceColour colour) {
 }
 
 std::ostream& operator<<(std::ostream& output, ChessPiece& piece){
-    std::cout << piece.colour << " " << piece.position << " " 
-    << piece.getPieceType() << "\n";
+    std::cout << "At " << piece.position << " there is a " 
+    << piece.colour << " " << piece.getPieceType() << "\n";
     return output;
 }
 // Helper function for loadState
@@ -58,31 +71,42 @@ std::vector<std::string> splitString(std::string string_to_parse, char delimiter
     return substrings;
 }
 
-ChessGame::ChessGame(){ }
 
 void ChessGame::displayPieces() {
-    for (ChessPiece *piece: pieces_in_play) {
-        if (piece == nullptr) {
-            break;
-        } else {
-            std::cout << *piece<< "\n";
+    for (char file = 'A'; file < 'I'; file++) {
+        for (char rank = '1'; rank < '9'; rank++) {
+            std::string coordinates;
+            coordinates += file;
+            coordinates += rank;
+            if (this->boardState.at(coordinates) == nullptr) {
+                std::cout << "At " << coordinates << " there are no pieces.\n";
+            } else {
+                std::cout << *this->boardState.at(coordinates);
+            }
         }
-        
     }
 }
+
+// Helper Function for
+bool isValidPosition(std::string coordinates) {
+    if (coordinates[0] > 'H' || coordinates[0] < 'A')
+        return false;
+    if (coordinates[1] > '8' || coordinates[1] < '1')
+        return false;
+    return true;
+}
+
 void ChessGame::loadState(std::string fen) {
     // We use splitString to keep the logic modular 
     // The same effect can be achieved using a single loop but then we would be 
     // dealing with too many if statements
     std::vector<std::string> target_strings = splitString(fen, ' ');
-    for (int i=0; i < target_strings.size(); i++) {
-        std::cout <<target_strings[i] << "\n";
-    }
+
     std::string positions = target_strings[0];
     this->turn = target_strings[1];
     this->castling = target_strings[2];
 
-    std::string coordinates = "XX";
+    std::string coordinates = "__";
     char file='A';
     char rank='8';
 
@@ -94,7 +118,8 @@ void ChessGame::loadState(std::string fen) {
             file = 'A';
         } else {
             if (isalpha(positions[idx])) {
-                this->pieces_in_play.push_back(placePiece(coordinates, positions[idx]));
+                ChessPiece *piece= placePiece(coordinates, positions[idx]);
+                this->boardState[coordinates] = piece;
                 file++;
             } else if (isdigit(positions[idx])){
                 file += positions[idx] - '0';

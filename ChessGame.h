@@ -1,5 +1,5 @@
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 class ChessPiece;
 
@@ -8,7 +8,7 @@ class ChessGame {
         std::string turn;
         std::string castling;
 
-        std::vector<ChessPiece *> pieces_in_play;
+        std::unordered_map<std::string, ChessPiece*> boardState;
     public:
         ChessGame();
         void loadState(std::string nef);
