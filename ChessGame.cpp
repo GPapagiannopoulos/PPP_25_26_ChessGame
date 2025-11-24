@@ -3,32 +3,47 @@
 
 ChessGame::ChessGame() { }
 
-void ChessGame::loadState(std::string nef) {
+void ChessGame::loadState(std::string fen) {
+    char file='A';
+    char rank='8';
 
+    for (int idx=0; idx < fen.size(); idx++){
+        std::string coordinates;
+        coordinates += file;
+        coordinates += rank; 
+        if (rank < '1') 
+            break;
+        if (fen[idx] == '/') {
+            rank -- ;
+            file = 'A';
+        } else {
+            if (isalpha(fen[idx])) {
+                placePiece(coordinates, fen[idx]);
+                file++;
+            } else {
+                file += fen[idx] - '0';
+            }
+        }
+    }
 }
 
 // Helper function for loadState
-ChessPiece *placePiece(char start_coordinates[2], char piece) {
+ChessPiece *placePiece(std::string coordinates, char piece) {
     
-    PieceColour colour;
-    if (isupper(piece)){
-        colour = PieceColour::w;
-    } else {
-        colour = PieceColour::b;
-    }
+    PieceColour colour = isupper(piece)? PieceColour::w : PieceColour::b;
 
     switch (tolower(piece)) { 
         case('k'):
-            return new King(start_coordinates, colour);
+            return new King(coordinates, colour);
         case('q'):
-            return new Queen(start_coordinates, colour);
+            return new Queen(coordinates, colour);
         case('r'):
-            return new Rook(start_coordinates, colour);
+            return new Rook(coordinates, colour);
         case('n'):
-            return new Knight(start_coordinates, colour);
+            return new Knight(coordinates, colour);
         case('b'):
-            return new Bishop(start_coordinates, colour);
+            return new Bishop(coordinates, colour);
         case('p'):
-            return new Pawn(start_coordinates, colour);
+            return new Pawn(coordinates, colour);
         }
 };
