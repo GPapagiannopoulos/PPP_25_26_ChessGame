@@ -14,7 +14,7 @@ class ChessPiece {
         ChessPiece(std::string position, PieceColour colour);
     public:
         friend std::ostream& operator<<(std::ostream& output, ChessPiece& piece);        
-        //virtual void makeMove(std::string target_position) = 0;
+        virtual void makeMove(std::string start_position, std::string target_position, int limit) = 0;
         virtual std::string getPieceType() = 0;
         //void capture();
         //void beCaptured();
@@ -24,10 +24,9 @@ class King : virtual public ChessPiece {
     public:
         King(std::string _position, PieceColour _colour);
         std::string getPieceType() override;
-        /*
-        void makeMove(std::string target_position) override;
-        bool isCheck();
-        */
+        //void makeMove(std::string target_position) override;
+        //bool isCheck();
+        
 };
 
 class Queen : virtual public ChessPiece {
@@ -42,8 +41,7 @@ class Bishop : virtual public ChessPiece {
     public:
         Bishop(std::string position, PieceColour colour);
         std::string getPieceType() override;
-
-        //void makeMove(std::string target_position) override;
+        void makeMove(std::string start_position, std::string target_position, int limit) override;
 };
 
 class Knight : virtual public ChessPiece {

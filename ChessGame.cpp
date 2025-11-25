@@ -87,13 +87,8 @@ void ChessGame::displayPieces() {
     }
 }
 
-// Helper Function for
-bool isValidPosition(std::string coordinates) {
-    if (coordinates[0] > 'H' || coordinates[0] < 'A')
-        return false;
-    if (coordinates[1] > '8' || coordinates[1] < '1')
-        return false;
-    return true;
+std::unordered_map<std::string, ChessPiece*> ChessGame::getBoardState() {
+    return this->boardState;
 }
 
 void ChessGame::loadState(std::string fen) {

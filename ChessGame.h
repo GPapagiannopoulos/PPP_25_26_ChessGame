@@ -15,4 +15,6 @@ class ChessGame {
         void submitMove(char start_position[2], char end_position[2]);
 
         void displayPieces();
-};
+        std::unordered_map<std::string, ChessPiece*> getBoardState();
+
+    };
