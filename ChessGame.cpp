@@ -96,12 +96,6 @@ ChessGame::ChessGame() {
     }
 }
 
-// At the risk of sounding unprofessional, having to use this syntax is hideous 
-// but we really don't want anyone to have write access through this function
-ChessPiece *const *ChessGame::getBoardState() const{
-    return this->boardState;
-}
-
 void ChessGame::loadState(std::string fen) {
     // We use splitString to keep the logic modular 
     // The same effect can be achieved using a single loop but then we would be 
@@ -146,10 +140,18 @@ bool ChessGame::piecePresent(const char *position) const {
     if (!position)
         return false;
     int index = flattenCoordinates(position);
-    if (this->getBoardState()[index] == nullptr)
+    if (this->boardState[index] == nullptr)
         return false;
     return true;
 }
+
+bool ChessGame::noPiecesBetween(const char *start_position, const char *end_position) const {
+    int index = flattenCoordinates(start_position);
+    ChessPiece *piece = this->boardState[index];
+
+    // if (!piece->validateMove(start, end)) return false;
+    
+} 
 
 void ChessGame::submitMove(const char *start_position, const char *end_position) {
     // Cheeck that board is in a valid state 
@@ -161,11 +163,13 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
 
     // Check that start and end positions are valid 
     if (!validCoordinates(start_position)) {
-        std::cout << start_position[0] << start_position[1]  << " is not a valid square on the board.\n";
+        std::cout << start_position[0] << start_position[1]  
+                  << " is not a valid square on the board.\n";
         return;
     }
     if (!validCoordinates(end_position)) {
-        std::cout << end_position[0] << end_position[1] << " is not a valid square on the board.\n";
+        std::cout << end_position[0] << end_position[1] 
+                  << " is not a valid square on the board.\n";
         return;
     }
 
@@ -176,6 +180,8 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     }
 
     // Check that the piece can move to the end position 
+    // 1) Piece movement 
+    // 2) Pieces blocking the way 
 
     // Check for capture 
 

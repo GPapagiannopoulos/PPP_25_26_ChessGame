@@ -14,5 +14,5 @@ class ChessGame {
 
         void displayPieces();
         bool piecePresent(const char *coordinates) const;
-        ChessPiece *const *getBoardState() const;
+        bool noPiecesBetween(const char *start_position, const char *end_position) const;
     };
