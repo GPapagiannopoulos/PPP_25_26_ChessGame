@@ -16,53 +16,68 @@ class ChessPiece {
         ChessPiece(const char *position, PieceColour colour);
     public:
         friend std::ostream& operator<<(std::ostream& output, ChessPiece& piece);        
-        //virtual void makeMove(const char* start_position, const char* target_position, int limit) = 0;
+        virtual bool canMove(const char* start_position, const char* target_position) const = 0;
         virtual PieceType getPieceType() const = 0;
         //void capture();
         //void beCaptured();
 };
 
 class King : virtual public ChessPiece {
+    private:
+        int movement_limit = 1;
+        bool hasMoved = false;
     public:
         King(const char *position, PieceColour _colour);
         PieceType getPieceType() const override;
-        //void makeMove(std::string target_position) override;
+        bool canMove(const char *start_position, const char *target_position) const override;
+        bool makeFirstMove();
         //bool isCheck();
         
 };
 
 class Queen : virtual public ChessPiece {
+    private:
+        int movement_limit = 8;
     public:
         Queen(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-
-        //void makeMove(std::string target_position) override;
+        bool canMove(const char *start_position, const char *target_position) const override;
 };
 
 class Bishop : virtual public ChessPiece {
+    private:
+        int movement_limit = 8;
     public:
         Bishop(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        //void makeMove(std::string start_position, std::string target_position, int limit) override;
+        bool canMove(const char *start_position, const char *target_position) const override;
 };
 
 class Knight : virtual public ChessPiece {
     public:
         Knight(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        //void makeMove(std::string target_position) override;
+        bool canMove(const char *start_position, const char *target_position) const override;
 };
 
 class Rook : virtual public ChessPiece {
+    private:
+        int movement_limit = 8;
+        bool hasMoved = false;  
     public:
         Rook(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        //void makeMove(std::string target_position) override;
+        bool canMove(const char *start_position, const char *target_position) const override;
+        bool makeFirstMove();
 };
 
 class Pawn : virtual public ChessPiece {
+    private:
+        int movement_limit = 8; 
+        bool hasMoved = false;   
     public:
         Pawn(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        //void makeMove(std::string target_position) override;
+        bool canMove(const char *start_position, const char *target_position) const override;
+        bool makeFirstMove();
 };
