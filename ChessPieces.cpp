@@ -42,7 +42,6 @@ bool validDiagonalMovement(const char *start_position, const char *end_position,
 
     if (abs(rank) != abs(file))
         return false;
-    // x = y so doesn't matter which one we choose 
     if (rank < limit)
         return false;
     return true;
@@ -72,9 +71,9 @@ ChessPiece::ChessPiece(const char *_position, PieceColour _colour) {
 // ----- KING -----
 King::King(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-PieceType King::getPieceType() const {
-    return PieceType::King;
-    }
+
+PieceType King::getPieceType() const {return PieceType::King;}
+
 bool King::canMove(const char *start_position, const char *target_position) const {
     bool diagMov = validDiagonalMovement(start_position, target_position, this->movement_limit);
     bool horMov = validHorizontalMovement(start_position, target_position, this->movement_limit);
@@ -85,9 +84,9 @@ bool King::canMove(const char *start_position, const char *target_position) cons
 // ----- QUEEN -----
 Queen::Queen(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-PieceType Queen::getPieceType() const {
-    return PieceType::Queen;
-    }
+
+PieceType Queen::getPieceType() const {return PieceType::Queen;}
+
 bool Queen::canMove(const char *start_position, const char *target_position) const {
     bool diagMov = validDiagonalMovement(start_position, target_position, this->movement_limit);
     bool horMov = validHorizontalMovement(start_position, target_position, this->movement_limit);
@@ -98,9 +97,9 @@ bool Queen::canMove(const char *start_position, const char *target_position) con
 // ----- BISHOP -----
 Bishop::Bishop(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-PieceType Bishop::getPieceType() const {
-    return PieceType::Bishop;
-    }
+
+PieceType Bishop::getPieceType() const {return PieceType::Bishop;}
+
 bool Bishop::canMove(const char *start_position, const char *target_position) const {
     return validDiagonalMovement(start_position, target_position, this->movement_limit);
 }
@@ -108,9 +107,9 @@ bool Bishop::canMove(const char *start_position, const char *target_position) co
 // ----- KNIGHT -----
 Knight::Knight(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-PieceType Knight::getPieceType() const {
-    return PieceType::Knight;
-    }
+
+PieceType Knight::getPieceType() const {return PieceType::Knight;}
+
 bool Knight::canMove(const char *start_position, const char *target_position) const {
     int fileDiff = abs(start_position[0] - target_position[0]);
     int rankDiff = abs(start_position[1] - target_position[1]);
@@ -121,9 +120,9 @@ bool Knight::canMove(const char *start_position, const char *target_position) co
 // ----- ROOK -----
 Rook::Rook(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-PieceType Rook::getPieceType() const {
-    return PieceType::Rook;
-    }
+
+PieceType Rook::getPieceType() const {return PieceType::Rook;}
+
 bool Rook::canMove(const char *start_position, const char *target_position) const {
     return (validHorizontalMovement(start_position, target_position, this->movement_limit));
 }
@@ -131,9 +130,9 @@ bool Rook::canMove(const char *start_position, const char *target_position) cons
 // ----- PAWN -----
 Pawn::Pawn(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-PieceType Pawn::getPieceType() const {
-    return PieceType::Pawn;
-    }
+
+PieceType Pawn::getPieceType() const {return PieceType::Pawn;}
+
 bool Pawn::canMove(const char* start, const char* end) const {
     int fileDiff = std::abs(start[0] - end[0]);
     int rankDiff = end[1] - start[1]; 

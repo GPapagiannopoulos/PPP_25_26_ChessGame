@@ -75,18 +75,14 @@ std::vector<std::string> splitString(std::string string_to_parse, char delimiter
 
 // Debugging function 
 void ChessGame::displayPieces() {
-    for (char file = 'A'; file < 'I'; file++) {
-        for (char rank = '1'; rank < '9'; rank++) {
-            char coordinates[3] = {file, rank, '\0'};
-            int index = flattenCoordinates(coordinates);
-            if (this->boardState[index] == nullptr) {
-                std::cout << "At " << coordinates << " there are no pieces.\n";
+    for (int idx=0; idx<64; idx++) {
+            if (this->boardState[idx] == nullptr) {
+                std::cout << "At " << retrieveFile(idx) << retrieveRank(idx) << " there are no pieces.\n";
             } else {
-                std::cout << *this->boardState[index];
+                std::cout << *this->boardState[idx];
             }
         }
     }
-}
 
 // ----- CHESS GAME -----
 ChessGame::ChessGame() { 
@@ -149,8 +145,9 @@ bool ChessGame::noPiecesBetween(const char *start_position, const char *end_posi
     int index = flattenCoordinates(start_position);
     ChessPiece *piece = this->boardState[index];
 
-    // if (!piece->validateMove(start, end)) return false;
-    
+    if (!piece->canMove(start_position, end_position)) 
+        return false;
+    return true;
 } 
 
 void ChessGame::submitMove(const char *start_position, const char *end_position) {
