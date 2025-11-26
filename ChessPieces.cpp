@@ -1,35 +1,55 @@
 #include "ChessPieces.h"
 #include "ChessGame.h"
-#include <string>
+#include <cstring>
 #include <tuple>
 #include <unordered_map>
 
-// Helper function for piece movement 
-bool validCoordinates(std::string position) {
-    if ((position[0] <'A') || position[0] > 'H') 
-        return false;
-    if ((position[1] <'1') || (position[1] > '8'))
-        return false;
-    return true;
+std::ostream& operator<<(std::ostream& out, PieceColour colour) {
+    switch(colour){
+        case(PieceColour::w):
+            return std::cout<<"White";
+        case(PieceColour::b):
+            return std::cout<<"Black";
+        default:
+            return std::cout<<"That is not a valid colour!\n";
+        } 
+}
+
+std::ostream& operator<<(std::ostream& out, PieceType piece) {
+    switch(piece){
+        case(PieceType::King):
+            return std::cout<<"King";
+        case(PieceType::Queen):
+            return std::cout<<"Queen";
+        case(PieceType::Bishop):
+            return std::cout<<"Bishop";
+        case(PieceType::Knight):
+            return std::cout<<"Knight";
+        case(PieceType::Rook):
+            return std::cout<<"Rook";
+        case(PieceType::Pawn):
+            return std::cout<<"Pawn";
+        default:
+            return std::cout<<"That is not a chess piece!\n";
+        } 
 }
 
 // Helper function for valid diagonal movement 
-bool validDiagonalMovement(std::string start_position, std::string end_position, int limit) {
+bool validDiagonalMovement(const char *start_position, const char *end_position, int limit) {
     // Diagonal movement is equidistant from the x and y axis 
     int x_coordinate_diff = start_position[0] - end_position[0];
     int y_coordinate_diff = start_position[1] - end_position[1];
 
     if (abs(x_coordinate_diff) != abs(y_coordinate_diff))
         return false;
+    // x = y so doesn't matter which one we choose 
     if (x_coordinate_diff > limit)
         return false;
-    
-    
     return true;
 }
 
 // Helper function for valid horizontal movement 
-bool validHorizontalMovement(std::string start_position, std::string end_position, int limit) {
+bool validHorizontalMovement(const char *start_position, const char *end_position, int limit) {
     int x_coordinate_diff = abs(start_position[0] - end_position[0]);
     int y_coordinate_diff = abs(start_position[1] - end_position[1]);
 
@@ -43,56 +63,55 @@ bool validHorizontalMovement(std::string start_position, std::string end_positio
 }
 
 // Helper function for pieces in between
-bool noPiecesBetween(std::string start_position, std::string end_position, 
-                     std::tuple<int, int> rate_of_change, ChessGame* chessGame) {
-    
-    std::unordered_map<std::string, ChessPiece*> board_state = chessGame->getBoardState();
-    while (start_position[0] != end_position[0] && start_position[1] != end_position[1]) {
-        start_position[0] += std::get<0>(rate_of_change);
-        start_position[1] += std::get<1>(rate_of_change);
-    }
+bool noPiecesBetween(const char *start_position, const char *end_position) {
 } 
+
 // ----- BASE -----
-ChessPiece::ChessPiece(std::string _position, PieceColour _colour):
-                        position(_position),
-                        colour(_colour) { };
+ChessPiece::ChessPiece(const char *_position, PieceColour _colour) {
+    this->colour = _colour;
+    if (_position) {
+        std::strncpy(this->position, _position, 2);
+    }
+    this->position[2] = '\0';
+ };
+
 
 // ----- KING -----
-King::King(std::string _position, PieceColour _colour): 
+King::King(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-std::string King::getPieceType() {
-    return "King";
-}
+PieceType King::getPieceType() const {
+    return PieceType::King;
+    }
 // Helper function for King movement
 //bool valid 
 //void King::makeMove(std::string target_position){}
 
-Queen::Queen(std::string _position, PieceColour _colour): 
+Queen::Queen(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-std::string Queen::getPieceType() {
-    return "Queen";
-}
+PieceType Queen::getPieceType() const {
+    return PieceType::Queen;
+    }
 
-Bishop::Bishop(std::string _position, PieceColour _colour): 
+Bishop::Bishop(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-std::string Bishop::getPieceType() {
-    return "Bishop";
-}
+PieceType Bishop::getPieceType() const {
+    return PieceType::Bishop;
+    }
 
-Knight::Knight(std::string _position, PieceColour _colour): 
+Knight::Knight(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-std::string Knight::getPieceType() {
-    return "Knight";
-}
+PieceType Knight::getPieceType() const {
+    return PieceType::Knight;
+    }
 
-Rook::Rook(std::string _position, PieceColour _colour): 
+Rook::Rook(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-std::string Rook::getPieceType() {
-    return "Rook";
-}
+PieceType Rook::getPieceType() const {
+    return PieceType::Rook;
+    }
 
-Pawn::Pawn(std::string _position, PieceColour _colour): 
+Pawn::Pawn(const char* _position, PieceColour _colour): 
             ChessPiece(_position, _colour) { };
-std::string Pawn::getPieceType() {
-    return "Pawn";
-}
+PieceType Pawn::getPieceType() const {
+    return PieceType::Pawn;
+    }
