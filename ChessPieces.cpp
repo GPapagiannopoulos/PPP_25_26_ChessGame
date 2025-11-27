@@ -37,12 +37,12 @@ std::ostream& operator<<(std::ostream& out, PieceType piece) {
 // Helper function for valid diagonal movement 
 bool validDiagonalMovement(const char *start_position, const char *end_position, int limit) {
     // Diagonal movement is equidistant from the x and y axis 
-    int file = start_position[0] - end_position[0];
-    int rank = start_position[1] - end_position[1];
+    int fileDiff = start_position[0] - end_position[0];
+    int rankDiff = start_position[1] - end_position[1];
 
-    if (abs(rank) != abs(file))
+    if (abs(rankDiff) != abs(fileDiff))
         return false;
-    if (rank < limit)
+    if (rankDiff > limit)
         return false;
     return true;
 }
@@ -55,6 +55,8 @@ bool validHorizontalMovement(const char *start_position, const char *end_positio
     // XOR operation
     if ((rankDiff != 0) != (fileDiff != 0))
         return true;
+    if ((rankDiff < limit) && (fileDiff < limit))
+        return false;
     return false;        
 }
 
@@ -80,7 +82,7 @@ bool King::canMove(const char *start_position, const char *target_position) cons
     bool diagMov = validDiagonalMovement(start_position, target_position, this->movement_limit);
     bool horMov = validHorizontalMovement(start_position, target_position, this->movement_limit);
 
-    return (diagMov && horMov);
+    return (diagMov || horMov);
 }
 
 // ----- QUEEN -----
@@ -93,7 +95,7 @@ bool Queen::canMove(const char *start_position, const char *target_position) con
     bool diagMov = validDiagonalMovement(start_position, target_position, this->movement_limit);
     bool horMov = validHorizontalMovement(start_position, target_position, this->movement_limit);
     
-    return (diagMov && horMov);
+    return (diagMov || horMov);
 }
 
 // ----- BISHOP -----

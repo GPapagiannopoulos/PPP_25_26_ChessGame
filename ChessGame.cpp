@@ -167,15 +167,44 @@ bool ChessGame::piecePresent(const char *position) const {
     return true;
 }
 
-bool ChessGame::noPiecesBetween(const char *start_position, const char *end_position) const {
-    int index = flattenCoordinates(start_position);
-    ChessPiece *piece = this->boardState[index];
+bool ChessGame::noPiecesBetween(const int startIndex, const int endIndex, const ChessPiece *piece) const {
+    if (piece->getPieceType() == PieceType::Knight)
+        return true;
+    
+    int fileDiff = (endIndex%8) - (startIndex%8);
+    int rankDiff = (endIndex/8) - (startIndex/8);
 
-    if (!piece->canMove(start_position, end_position)) 
-        return false;
+    int fileUnit = (fileDiff == 0) ? 0 : (fileDiff > 0 ? 1 : -1);
+    int rankUnit = (rankDiff == 0) ? 0 : (rankDiff > 0 ? 1 : -1);
+
+    int stride = (rankUnit * 8) + fileUnit;
+    for (int currIndex = startIndex + stride; currIndex != endIndex; currIndex += stride) {
+        if (this->boardState[currIndex] != nullptr)
+            return false;
+    }
+    
     return true;
 } 
 
+bool ChessGame::validMove(const char *start_position, const char *end_position) const {
+    int startIndex = flattenCoordinates(start_position);
+    int endIndex = flattenCoordinates(end_position);
+    ChessPiece *piece = this->boardState[startIndex];
+
+    if (!piece->canMove(start_position, end_position)) {
+        std::cout << piece->getPieceType() << " cannot move from " 
+                  << start_position << " to " << end_position << ".\n";
+        return false;
+        }
+    if (!this->noPiecesBetween(startIndex, endIndex, piece)) {
+        std::cout << "There are pieces between "  
+                  << start_position << " and " << end_position << ".\n";
+        return false;
+        }
+    return true;
+}
+
+//    if (!piece->canMove(start_position, end_position)) return false;
 void ChessGame::submitMove(const char *start_position, const char *end_position) {
     // Cheeck that board is in a valid state 
     if (!this->validBoard) {
@@ -185,6 +214,7 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     }
 
     // Check that start and end positions are valid 
+    // Separating start and end positions in the check to give more granularity 
     if (!validCoordinates(start_position)) {
         std::cout << start_position[0] << start_position[1]  
                   << " is not a valid square on the board.\n";
@@ -215,13 +245,17 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     // 4) Illegal move 
 
     // Check that the piece can move to the end position 
-    // 1) Piece movement 
-    // 2) Pieces blocking the way 
+    if (!this->validMove(start_position, end_position)) {
+        std::cout << start_position << " to " << end_position
+                  << " is not a valid move.\n";
+        return; 
+    }
 
     // Check for capture 
 
     // Check for check 
 
     // Check for checkmate 
+
     std::cout << "Valid move.\n";
 };

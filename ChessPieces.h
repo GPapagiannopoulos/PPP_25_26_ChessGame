@@ -19,8 +19,6 @@ class ChessPiece {
         virtual bool canMove(const char* start_position, const char* target_position) const = 0;
         virtual PieceType getPieceType() const = 0;
         PieceColour getPieceColour() const;
-        //void capture();
-        //void beCaptured();
 };
 
 class King : virtual public ChessPiece {
@@ -33,7 +31,6 @@ class King : virtual public ChessPiece {
         PieceColour getPieceColour() const;
         bool canMove(const char *start_position, const char *target_position) const override;
         bool makeFirstMove();
-        //bool isCheck();
         
 };
 
