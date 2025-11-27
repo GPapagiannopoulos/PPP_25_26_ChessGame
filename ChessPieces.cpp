@@ -35,22 +35,22 @@ std::ostream& operator<<(std::ostream& out, PieceType piece) {
 }
 
 // Helper function for valid diagonal movement 
-bool validDiagonalMovement(const char *start_position, const char *end_position, int limit) {
+bool validDiagonalMovement(const int startIndex, const int endIndex, int limit) {
     // Diagonal movement is equidistant from the x and y axis 
-    int fileDiff = start_position[0] - end_position[0];
-    int rankDiff = start_position[1] - end_position[1];
+    int fileDiff = (endIndex % 8) - (startIndex % 8);
+    int rankDiff = (endIndex / 8) - (startIndex / 8);
 
     if (abs(rankDiff) != abs(fileDiff))
         return false;
-    if (rankDiff > limit)
+    if (abs(rankDiff) > limit)
         return false;
     return true;
 }
 
 // Helper function for valid horizontal movement 
-bool validHorizontalMovement(const char *start_position, const char *end_position, int limit) {
-    int fileDiff = abs(start_position[0] - end_position[0]);
-    int rankDiff = abs(start_position[1] - end_position[1]);
+bool validOrthogonalMovement(const int startIndex, const int endIndex, int limit) {
+    int fileDiff = (endIndex % 8) - (startIndex % 8);
+    int rankDiff = (endIndex / 8) - (startIndex / 8);
 
     // XOR operation
     if ((rankDiff != 0) != (fileDiff != 0))
@@ -68,6 +68,7 @@ ChessPiece::ChessPiece(const char *_position, PieceColour _colour) {
     }
     this->position[2] = '\0';
 }
+
 PieceColour ChessPiece::getPieceColour() const {
     return this->colour;
 }
@@ -78,9 +79,9 @@ King::King(const char* _position, PieceColour _colour):
 
 PieceType King::getPieceType() const {return PieceType::King;}
 
-bool King::canMove(const char *start_position, const char *target_position) const {
-    bool diagMov = validDiagonalMovement(start_position, target_position, this->movement_limit);
-    bool horMov = validHorizontalMovement(start_position, target_position, this->movement_limit);
+bool King::canMove(const int startIndex, const int endIndex) const {
+    bool diagMov = validDiagonalMovement(startIndex, endIndex, this->movement_limit);
+    bool horMov = validOrthogonalMovement(startIndex, endIndex, this->movement_limit);
 
     return (diagMov || horMov);
 }
@@ -91,9 +92,9 @@ Queen::Queen(const char* _position, PieceColour _colour):
 
 PieceType Queen::getPieceType() const {return PieceType::Queen;}
 
-bool Queen::canMove(const char *start_position, const char *target_position) const {
-    bool diagMov = validDiagonalMovement(start_position, target_position, this->movement_limit);
-    bool horMov = validHorizontalMovement(start_position, target_position, this->movement_limit);
+bool Queen::canMove(const int startIndex, const int endIndex) const {
+    bool diagMov = validDiagonalMovement(startIndex, endIndex, this->movement_limit);
+    bool horMov = validOrthogonalMovement(startIndex, endIndex, this->movement_limit);
     
     return (diagMov || horMov);
 }
@@ -104,8 +105,8 @@ Bishop::Bishop(const char* _position, PieceColour _colour):
 
 PieceType Bishop::getPieceType() const {return PieceType::Bishop;}
 
-bool Bishop::canMove(const char *start_position, const char *target_position) const {
-    return validDiagonalMovement(start_position, target_position, this->movement_limit);
+bool Bishop::canMove(const int startIndex, const int endIndex) const {
+    return validDiagonalMovement(startIndex, endIndex, this->movement_limit);
 }
 
 // ----- KNIGHT -----
@@ -114,9 +115,9 @@ Knight::Knight(const char* _position, PieceColour _colour):
 
 PieceType Knight::getPieceType() const {return PieceType::Knight;}
 
-bool Knight::canMove(const char *start_position, const char *target_position) const {
-    int fileDiff = abs(start_position[0] - target_position[0]);
-    int rankDiff = abs(start_position[1] - target_position[1]);
+bool Knight::canMove(const int startIndex, const int endIndex) const {
+    int fileDiff = std::abs((endIndex % 8) - (startIndex % 8));
+    int rankDiff = std::abs((endIndex / 8) - (endIndex / 8));
 
     return (rankDiff * fileDiff == 2);
 }
@@ -127,8 +128,8 @@ Rook::Rook(const char* _position, PieceColour _colour):
 
 PieceType Rook::getPieceType() const {return PieceType::Rook;}
 
-bool Rook::canMove(const char *start_position, const char *target_position) const {
-    return (validHorizontalMovement(start_position, target_position, this->movement_limit));
+bool Rook::canMove(const int startIndex, const int endIndex) const {
+    return (validOrthogonalMovement(startIndex, endIndex, this->movement_limit));
 }
 
 // ----- PAWN -----
@@ -137,9 +138,9 @@ Pawn::Pawn(const char* _position, PieceColour _colour):
 
 PieceType Pawn::getPieceType() const {return PieceType::Pawn;}
 
-bool Pawn::canMove(const char* start, const char* end) const {
-    int fileDiff = std::abs(start[0] - end[0]);
-    int rankDiff = end[1] - start[1]; 
+bool Pawn::canMove(const int startIndex, const int endIndex) const {
+    int fileDiff = std::abs((endIndex % 8) - (startIndex % 8));
+    int rankDiff = (endIndex / 8) - (startIndex /8); 
 
     if (colour == PieceColour::w) {
         if (rankDiff < 1 || rankDiff > 2) return false; 
