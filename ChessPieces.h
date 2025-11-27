@@ -16,7 +16,7 @@ class ChessPiece {
         ChessPiece(const char *position, PieceColour colour);
     public:
         friend std::ostream& operator<<(std::ostream& output, ChessPiece& piece);        
-        virtual bool canMove(const char* start_position, const char* target_position) const = 0;
+        virtual bool canMove(const int startIndex, const int endIndex) const = 0;
         virtual PieceType getPieceType() const = 0;
         PieceColour getPieceColour() const;
 };
@@ -29,9 +29,8 @@ class King : virtual public ChessPiece {
         King(const char *position, PieceColour _colour);
         PieceType getPieceType() const override;
         PieceColour getPieceColour() const;
-        bool canMove(const char *start_position, const char *target_position) const override;
+        bool canMove(const int startIndex, const int endIndex) const override;
         bool makeFirstMove();
-        
 };
 
 class Queen : virtual public ChessPiece {
@@ -40,7 +39,7 @@ class Queen : virtual public ChessPiece {
     public:
         Queen(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        bool canMove(const char *start_position, const char *target_position) const override;
+        bool canMove(const int startIndex, const int endIndex) const override;
 };
 
 class Bishop : virtual public ChessPiece {
@@ -49,14 +48,14 @@ class Bishop : virtual public ChessPiece {
     public:
         Bishop(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        bool canMove(const char *start_position, const char *target_position) const override;
+        bool canMove(const int startIndex, const int endIndex) const override;
 };
 
 class Knight : virtual public ChessPiece {
     public:
         Knight(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        bool canMove(const char *start_position, const char *target_position) const override;
+        bool canMove(const int startIndex, const int endIndex) const override;
 };
 
 class Rook : virtual public ChessPiece {
@@ -66,7 +65,7 @@ class Rook : virtual public ChessPiece {
     public:
         Rook(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        bool canMove(const char *start_position, const char *target_position) const override;
+        bool canMove(const int startIndex, const int endIndex) const override;
         bool makeFirstMove();
 };
 
@@ -77,6 +76,6 @@ class Pawn : virtual public ChessPiece {
     public:
         Pawn(const char* position, PieceColour colour);
         PieceType getPieceType() const override;
-        bool canMove(const char *start_position, const char *target_position) const override;
+        bool canMove(const int startIndex, const int endIndex) const override;
         bool makeFirstMove();
 };

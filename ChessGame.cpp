@@ -15,14 +15,13 @@ int flattenCoordinates(const char *coordinates) {
     return (rank * 8 + file);
 }
 
-char retrieveRank(const int index) {
+char recoverRank(const int index) {
     return (index / 8) + 'A';
 }
 
-char retrieveFile(const int index) {
+char recoverFile(const int index) {
     return (index % 8) + '1';
 }
-
 
 std::ostream& operator<<(std::ostream& output, ChessPiece& piece){
     std::cout << "At " << piece.position << " there is a " 
@@ -186,26 +185,48 @@ bool ChessGame::noPiecesBetween(const int startIndex, const int endIndex, const 
     return true;
 } 
 
-bool ChessGame::validMove(const char *start_position, const char *end_position) const {
-    int startIndex = flattenCoordinates(start_position);
-    int endIndex = flattenCoordinates(end_position);
+// BUG
+bool ChessGame::validMove(const int startIndex, const int endIndex) const {
     ChessPiece *piece = this->boardState[startIndex];
-
-    if (!piece->canMove(start_position, end_position)) {
+    
+    if (!piece->canMove(startIndex, endIndex)) {
         std::cout << piece->getPieceType() << " cannot move from " 
-                  << start_position << " to " << end_position << ".\n";
+                  << recoverFile(startIndex) << recoverRank(startIndex) << " to " 
+                  << recoverFile(endIndex) << recoverRank(endIndex) << ".\n";
         return false;
         }
     if (!this->noPiecesBetween(startIndex, endIndex, piece)) {
         std::cout << "There are pieces between "  
-                  << start_position << " and " << end_position << ".\n";
+                  << recoverFile(startIndex) << recoverRank(startIndex) << " and " 
+                  << recoverFile(endIndex) << recoverRank(endIndex) << ".\n";
         return false;
         }
     return true;
 }
 
+bool ChessGame::validCapture(const int startIndex, const int endIndex) {
+    ChessPiece *movingPiece = this->boardState[startIndex];
+
+    if (this->boardState[endIndex] == nullptr) {
+        return true;    
+    }
+
+    if (this->boardState[startIndex]->getPieceColour() == this->boardState[endIndex]->getPieceColour())
+        return false;
+    
+    if (this->boardState[endIndex] != nullptr) {
+        //delete this->boardState[endIndex];
+    }
+    this->boardState[endIndex] = movingPiece;
+    this->boardState[startIndex] = nullptr;
+    return true;
+}
+
 //    if (!piece->canMove(start_position, end_position)) return false;
 void ChessGame::submitMove(const char *start_position, const char *end_position) {
+    int startIndex = flattenCoordinates(start_position);
+    int endIndex = flattenCoordinates(end_position);
+
     // Cheeck that board is in a valid state 
     if (!this->validBoard) {
         std::cout << "The board is not in a valid state!\n"
@@ -243,18 +264,23 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     // 2) En passant 
     // 3) Pawn promotion 
     // 4) Illegal move 
-
+    
     // Check that the piece can move to the end position 
-    if (!this->validMove(start_position, end_position)) {
+    if (!this->validMove(startIndex, endIndex)) {
         std::cout << start_position << " to " << end_position
                   << " is not a valid move.\n";
         return; 
     }
 
     // Check for capture 
+    if (!this->validCapture(startIndex, endIndex)) {
+        std::cout << "You cannot capture your own piece.\n";
+        return;
+    }
 
     // Check for check 
 
+    
     // Check for checkmate 
 
     std::cout << "Valid move.\n";
