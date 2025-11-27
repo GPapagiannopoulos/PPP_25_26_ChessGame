@@ -12,7 +12,7 @@ int flattenCoordinates(const char *coordinates) {
         return -1;
     int file = coordinates[0] - 'A';
     int rank = coordinates[1] - '1';
-    return (file * 8 + rank);
+    return (rank * 8 + file);
 }
 
 char retrieveRank(const int index) {
@@ -28,6 +28,18 @@ std::ostream& operator<<(std::ostream& output, ChessPiece& piece){
     std::cout << "At " << piece.position << " there is a " 
     << piece.colour << " " << piece.getPieceType() << "\n";
     return output;
+}
+
+PieceColour convertColour(const char* colour) {
+    switch(colour[0]) {
+        case('w'):
+            return PieceColour::w;
+        case('b'):
+            return PieceColour::b;
+        default:
+            std::cout << "Invalid colour. Malformed FEN string likely.\n";
+            return PieceColour::n;
+    }
 }
 
 // Helper function for loadState
@@ -75,18 +87,11 @@ std::vector<std::string> splitString(std::string string_to_parse, char delimiter
 
 // Debugging function 
 void ChessGame::displayPieces() {
-    for (char file = 'A'; file < 'I'; file++) {
-        for (char rank = '1'; rank < '9'; rank++) {
-            char coordinates[3] = {file, rank, '\0'};
-            int index = flattenCoordinates(coordinates);
-            if (this->boardState[index] == nullptr) {
-                std::cout << "At " << coordinates << " there are no pieces.\n";
-            } else {
-                std::cout << *this->boardState[index];
-            }
+    for (int idx=0; idx<64; idx++) {
+            if (this->boardState[idx] != nullptr)
+                std::cout << *this->boardState[idx];
         }
     }
-}
 
 // ----- CHESS GAME -----
 ChessGame::ChessGame() { 
@@ -102,6 +107,8 @@ void ChessGame::loadState(std::string fen) {
     // dealing with too many if statements
     std::vector<std::string> target_strings = splitString(fen, ' ');
     std::string positions = target_strings[0];
+    const char *turn = target_strings[1].c_str();
+    this->toGo = convertColour(turn);
 
     char file='A';
     char rank='8';
@@ -121,7 +128,13 @@ void ChessGame::loadState(std::string fen) {
             
         }
     this->validBoard = true;
-    this->displayPieces();
+//    this->displayPieces();
+}
+
+void ChessGame::clearBoard() {
+    for (int idx=0; idx <64; idx++) {
+        this->boardState[idx] = nullptr;
+    }
 }
 
 // Helper function for submitMove 
@@ -135,6 +148,15 @@ bool validCoordinates(const char *position) {
     return true;
 }
 
+// Helper function for submitMove
+bool ChessGame::validTurn(const char *start_coordinates) const {
+    int idx = flattenCoordinates(start_coordinates);
+    ChessPiece *piece = this->boardState[idx];
+    if (piece->getPieceColour() == this->toGo) {
+        return true;
+    }
+    return false;
+}
 // Helper function for submitMove 
 bool ChessGame::piecePresent(const char *position) const {
     if (!position)
@@ -145,14 +167,44 @@ bool ChessGame::piecePresent(const char *position) const {
     return true;
 }
 
-bool ChessGame::noPiecesBetween(const char *start_position, const char *end_position) const {
-    int index = flattenCoordinates(start_position);
-    ChessPiece *piece = this->boardState[index];
-
-    // if (!piece->validateMove(start, end)) return false;
+bool ChessGame::noPiecesBetween(const int startIndex, const int endIndex, const ChessPiece *piece) const {
+    if (piece->getPieceType() == PieceType::Knight)
+        return true;
     
+    int fileDiff = (endIndex%8) - (startIndex%8);
+    int rankDiff = (endIndex/8) - (startIndex/8);
+
+    int fileUnit = (fileDiff == 0) ? 0 : (fileDiff > 0 ? 1 : -1);
+    int rankUnit = (rankDiff == 0) ? 0 : (rankDiff > 0 ? 1 : -1);
+
+    int stride = (rankUnit * 8) + fileUnit;
+    for (int currIndex = startIndex + stride; currIndex != endIndex; currIndex += stride) {
+        if (this->boardState[currIndex] != nullptr)
+            return false;
+    }
+    
+    return true;
 } 
 
+bool ChessGame::validMove(const char *start_position, const char *end_position) const {
+    int startIndex = flattenCoordinates(start_position);
+    int endIndex = flattenCoordinates(end_position);
+    ChessPiece *piece = this->boardState[startIndex];
+
+    if (!piece->canMove(start_position, end_position)) {
+        std::cout << piece->getPieceType() << " cannot move from " 
+                  << start_position << " to " << end_position << ".\n";
+        return false;
+        }
+    if (!this->noPiecesBetween(startIndex, endIndex, piece)) {
+        std::cout << "There are pieces between "  
+                  << start_position << " and " << end_position << ".\n";
+        return false;
+        }
+    return true;
+}
+
+//    if (!piece->canMove(start_position, end_position)) return false;
 void ChessGame::submitMove(const char *start_position, const char *end_position) {
     // Cheeck that board is in a valid state 
     if (!this->validBoard) {
@@ -162,6 +214,7 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     }
 
     // Check that start and end positions are valid 
+    // Separating start and end positions in the check to give more granularity 
     if (!validCoordinates(start_position)) {
         std::cout << start_position[0] << start_position[1]  
                   << " is not a valid square on the board.\n";
@@ -179,13 +232,30 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
         return; 
     }
 
+    // Check whether this colour to move 
+    if (!validTurn(start_position)) {
+        std::cout << "It is " << this->toGo << " to move!\n";
+        return; 
+    }
+
+    // Check whether we have a special move 
+    // 1) Castling 
+    // 2) En passant 
+    // 3) Pawn promotion 
+    // 4) Illegal move 
+
     // Check that the piece can move to the end position 
-    // 1) Piece movement 
-    // 2) Pieces blocking the way 
+    if (!this->validMove(start_position, end_position)) {
+        std::cout << start_position << " to " << end_position
+                  << " is not a valid move.\n";
+        return; 
+    }
 
     // Check for capture 
 
     // Check for check 
 
     // Check for checkmate 
-}
+
+    std::cout << "Valid move.\n";
+};
