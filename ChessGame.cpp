@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 // ----- HELPER FUNCTIONS -----
 
@@ -95,6 +96,8 @@ void ChessGame::displayPieces() {
 // ----- CHESS GAME -----
 ChessGame::ChessGame() { 
     validBoard = false;
+    blackKingPosition = -1;
+    whiteKingPosition = -1;
     for (int i=0; i<64; i++){
         boardState[i] = nullptr;
     }
@@ -122,6 +125,13 @@ void ChessGame::loadState(std::string fen) {
                 int index = flattenCoordinates(coordinates);
                 ChessPiece *piece= placePiece(coordinates, positions[idx]);
                 this->boardState[index] = piece;
+                if (piece->getPieceType() == PieceType::King) {
+                    if (piece->getPieceColour() == PieceColour::b) {
+                        this->blackKingPosition = index;
+                    } else {
+                        this->whiteKingPosition = index;
+                    }
+                }
                 file++;
             } 
             
@@ -131,36 +141,35 @@ void ChessGame::loadState(std::string fen) {
 }
 
 void ChessGame::clearBoard() {
+    
+    this->blackKingPosition = -1;
+    this->whiteKingPosition = -1;
+    this->validBoard = false;
+    this->toGo = PieceColour::w;
+
     for (int idx=0; idx <64; idx++) {
         this->boardState[idx] = nullptr;
     }
+
 }
 
 // Helper function for submitMove 
-bool validCoordinates(const char *position) {
-    if (!position)
-        return false;
-    if ((position[0] <'A') || position[0] > 'H') 
-        return false;
-    if ((position[1] <'1') || (position[1] > '8'))
+bool validCoordinates(int index) {
+    if (index < 0 || index >= 64)
         return false;
     return true;
 }
 
 // Helper function for submitMove
-bool ChessGame::validTurn(const char *start_coordinates) const {
-    int idx = flattenCoordinates(start_coordinates);
-    ChessPiece *piece = this->boardState[idx];
+bool ChessGame::validTurn(const int index) const {
+    ChessPiece *piece = this->boardState[index];
     if (piece->getPieceColour() == this->toGo) {
         return true;
     }
     return false;
 }
 // Helper function for submitMove 
-bool ChessGame::piecePresent(const char *position) const {
-    if (!position)
-        return false;
-    int index = flattenCoordinates(position);
+bool ChessGame::piecePresent(const int index) const {
     if (this->boardState[index] == nullptr)
         return false;
     return true;
@@ -185,7 +194,6 @@ bool ChessGame::noPiecesBetween(const int startIndex, const int endIndex, const 
     return true;
 } 
 
-// BUG
 bool ChessGame::validMove(const int startIndex, const int endIndex) const {
     ChessPiece *piece = this->boardState[startIndex];
     
@@ -222,10 +230,108 @@ bool ChessGame::validCapture(const int startIndex, const int endIndex) {
     return true;
 }
 
+bool ChessGame::locationUnderAttack(const int index, const PieceColour colour) const {
+
+    // Knight attackers
+    const int knightOffsets[] = {-17, -15, -10, -6, 6, 10, 15, 17};
+    int currentFile = index % 8;
+
+    for (int offset : knightOffsets) {
+        int target = index + offset;
+        if (target >= 0 && target < 64) {
+            int targetFile = target % 8;
+            if (std::abs(currentFile - targetFile) > 2)
+                continue;
+
+            ChessPiece *piece= this->boardState[target];
+            if (piece != nullptr) {
+                if ((piece->getPieceColour() != colour) &&
+                    piece->getPieceType() == PieceType::Knight) 
+                    return true;
+            }
+        }
+    }
+
+    // Check Orthogonal Attackers (Rook/Queen)
+    const int orthogonalDirections[] = {-8, 8, -1, 1}; // Up, Down, Left, Right
+    for (int step : orthogonalDirections) {
+        for (int i = index + step; validCoordinates(i); i += step) {
+            int prevFile = (i - step) % 8;
+            int currFile = i % 8;
+            if (std::abs(currFile - prevFile) > 1)
+                break; 
+            ChessPiece* piece = this->boardState[i];
+            if (piece != nullptr) {
+                if (piece->getPieceColour() != colour && 
+                   (piece->getPieceType() == PieceType::Rook || piece->getPieceType() == PieceType::Queen)) {
+                    return true;
+                }
+                break; 
+            }
+            
+        }
+    }
+
+    // Check diagonal attackers (Bishop/Queen)
+    const int diagonalDirections[] = {-9, -7, 7, 9};
+    for (int step : diagonalDirections) {
+        for (int i = index + step; validCoordinates(i); i += step) {
+            int prevFile = (i - step) % 8;
+            int currFile = i % 8;
+            if (std::abs(currFile - prevFile) > 1)
+                break;
+            ChessPiece* piece = this->boardState[i];
+            if (piece != nullptr) {
+                if (piece->getPieceColour() != colour && 
+                   (piece->getPieceType() == PieceType::Bishop || piece->getPieceType() == PieceType::Queen)) {
+                    return true;
+                }
+                break;
+            }
+        }
+    }
+
+    // Check Pawn attackers
+    int attackDirection = (colour == PieceColour::w) ? 1 : -1;
+    int diagonalOffsets[2] = {-1, 1};
+    for (int offset: diagonalOffsets) {
+        int attackerIndex = index + (attackDirection * 8) + offset; 
+        
+        if (attackerIndex < 0 || attackerIndex >= 64)
+            continue;
+
+        int currentFile = index % 8;
+        int attackerFile = attackerIndex % 8;
+        if (std::abs(currentFile - attackerFile) != 1)
+            continue;
+        
+        ChessPiece *piece = this->boardState[attackerIndex];
+        if (piece != nullptr) {
+            if (piece->getPieceColour() != colour && 
+                piece->getPieceType() == PieceType::Pawn) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool ChessGame::kingInCheck(int kingCoordinates) {
+    PieceColour kingColour = this->boardState[kingCoordinates]->getPieceColour();
+    
+    return this->locationUnderAttack(kingCoordinates, kingColour);
+}
+
 //    if (!piece->canMove(start_position, end_position)) return false;
 void ChessGame::submitMove(const char *start_position, const char *end_position) {
     int startIndex = flattenCoordinates(start_position);
     int endIndex = flattenCoordinates(end_position);
+
+    if (this->blackKingPosition == -1 || this->whiteKingPosition == -1) {
+        std::cout << "You are playing a game without a king!\n";
+        return;
+    }
 
     // Cheeck that board is in a valid state 
     if (!this->validBoard) {
@@ -236,25 +342,25 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
 
     // Check that start and end positions are valid 
     // Separating start and end positions in the check to give more granularity 
-    if (!validCoordinates(start_position)) {
-        std::cout << start_position[0] << start_position[1]  
+    if (!validCoordinates(startIndex)) {
+        std::cout << recoverFile(startIndex) << recoverRank(startIndex)   
                   << " is not a valid square on the board.\n";
         return;
     }
-    if (!validCoordinates(end_position)) {
-        std::cout << end_position[0] << end_position[1] 
+    if (!validCoordinates(endIndex)) {
+        std::cout << recoverFile(endIndex) << recoverRank(endIndex)   
                   << " is not a valid square on the board.\n";
         return;
     }
 
     // Check that there are pieces in start position 
-    if (!piecePresent(start_position)) {
-        std::cout << "There are no pieces at " << start_position << "\n";
+    if (!piecePresent(startIndex)) {
+        std::cout << "There are no pieces at " << recoverFile(startIndex) << recoverRank(startIndex) << "\n";
         return; 
     }
 
     // Check whether this colour to move 
-    if (!validTurn(start_position)) {
+    if (!validTurn(startIndex)) {
         std::cout << "It is " << this->toGo << " to move!\n";
         return; 
     }
@@ -279,9 +385,14 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     }
 
     // Check for check 
-
-    
+    if (this->kingInCheck(this->blackKingPosition)) {
+        std::cout << "Black King in check.\n";
+    }
+    if (this->kingInCheck(this->whiteKingPosition)) {
+        std::cout << "White King in check.\n";
+    }
     // Check for checkmate 
 
+    // update ChessGame variables 
     std::cout << "Valid move.\n";
 };
