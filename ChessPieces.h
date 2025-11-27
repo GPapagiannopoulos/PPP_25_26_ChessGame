@@ -1,7 +1,7 @@
 #include <string>
 #include <iostream>
 
-enum class PieceColour {w, b};
+enum class PieceColour {w, b, n};
 // PieceType used in testing and debugging  
 enum class PieceType {King, Queen, Bishop, Knight, Rook, Pawn};
 
@@ -18,6 +18,7 @@ class ChessPiece {
         friend std::ostream& operator<<(std::ostream& output, ChessPiece& piece);        
         virtual bool canMove(const char* start_position, const char* target_position) const = 0;
         virtual PieceType getPieceType() const = 0;
+        PieceColour getPieceColour() const;
         //void capture();
         //void beCaptured();
 };
@@ -29,6 +30,7 @@ class King : virtual public ChessPiece {
     public:
         King(const char *position, PieceColour _colour);
         PieceType getPieceType() const override;
+        PieceColour getPieceColour() const;
         bool canMove(const char *start_position, const char *target_position) const override;
         bool makeFirstMove();
         //bool isCheck();

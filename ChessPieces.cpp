@@ -65,8 +65,10 @@ ChessPiece::ChessPiece(const char *_position, PieceColour _colour) {
         std::strncpy(this->position, _position, 2);
     }
     this->position[2] = '\0';
- };
-
+}
+PieceColour ChessPiece::getPieceColour() const {
+    return this->colour;
+}
 
 // ----- KING -----
 King::King(const char* _position, PieceColour _colour): 
