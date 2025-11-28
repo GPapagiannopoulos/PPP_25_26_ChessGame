@@ -52,10 +52,9 @@ bool validOrthogonalMovement(const int startIndex, const int endIndex, int limit
     int fileDiff = (endIndex % 8) - (startIndex % 8);
     int rankDiff = (endIndex / 8) - (startIndex / 8);
 
-    // XOR operation
-    if ((rankDiff != 0) == (fileDiff != 0))
+    if ((rankDiff != 0) && (fileDiff != 0))
         return false;
-    return (std::max(rankDiff, fileDiff) <= limit);       
+    return (std::max(std::abs(rankDiff), std::abs(fileDiff)) <= limit);       
 }
 
 // ----- BASE -----
@@ -117,10 +116,18 @@ Knight::Knight(PieceColour _colour):
 PieceType Knight::getPieceType() const {return PieceType::Knight;}
 
 bool Knight::canMove(const int startIndex, const int endIndex) const {
-    int fileDiff = std::abs((endIndex % 8) - (startIndex % 8));
-    int rankDiff = std::abs((endIndex / 8) - (startIndex / 8));
+    // Preventing board wrap-around 
+    int startFile = startIndex % 8;
+    int startRank = startIndex / 8;
 
-    return (rankDiff * fileDiff == 2);
+    int endFile = endIndex % 8;
+    int endRank = endIndex / 8;
+
+    int fileDiff = std::abs(endFile - startFile);
+    int rankDiff = std::abs(endRank - startRank);
+
+    return (fileDiff == 1 && rankDiff == 2) ||
+           (fileDiff == 2 && rankDiff == 1);
 }
 
 // ----- ROOK -----
@@ -155,7 +162,7 @@ bool Pawn::canMove(const int startIndex, const int endIndex) const {
         if (rankDiff == direction) {
             return true;
         }
-        if (rankDiff == (2 * direction) && startRank == startingRank) {
+        if (startRank == startingRank && rankDiff == (2 * direction)) {
             return true;
         }
         return false;

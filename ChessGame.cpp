@@ -126,7 +126,21 @@ void ChessGame::printBoard() {
     std::cout << "    A B C D E F G H \n\n";
 }
 
+void ChessGame::clearBoard() {
+    
+    this->blackKingPosition = -1;
+    this->whiteKingPosition = -1;
+    this->validBoard = false;
+    this->toGo = PieceColour::w;
+
+    for (int idx=0; idx <64; idx++) {
+        this->boardState[idx] = nullptr;
+    }
+
+}
+
 void ChessGame::loadState(std::string fen) {
+    this->clearBoard();
     std::cout << "A new board state is loaded!\n";
     
     std::vector<std::string> target_strings = splitString(fen, ' ');
@@ -196,19 +210,6 @@ void ChessGame::loadState(std::string fen) {
         }
     }
     return;
-}
-
-void ChessGame::clearBoard() {
-    
-    this->blackKingPosition = -1;
-    this->whiteKingPosition = -1;
-    this->validBoard = false;
-    this->toGo = PieceColour::w;
-
-    for (int idx=0; idx <64; idx++) {
-        this->boardState[idx] = nullptr;
-    }
-
 }
 
 // Helper function for submitMove 
@@ -350,6 +351,7 @@ bool ChessGame::kingInCheck(const int kingCoordinates) {
     return this->locationUnderAttack(kingCoordinates, kingColour);
 }
 
+// BUG BUG BUG BUG 
 bool ChessGame::isMoveSafe(const int startIndex, const int endIndex) {
     ChessPiece* movingPiece = boardState[startIndex];
     ChessPiece* capturedPiece = boardState[endIndex];
@@ -400,7 +402,15 @@ bool ChessGame::hasLegalMoves(const PieceColour colour) {
             if (this->boardState[end] != nullptr && 
                 this->boardState[end]->getPieceColour() == colour) 
                 continue;
-            
+            if (piece->getPieceType() == PieceType::Pawn) {
+                int fileDiff = std::abs((end % 8) - (start % 8));
+                bool isDestOccupied = (this->boardState[end] != nullptr);
+
+                if (fileDiff == 0 && isDestOccupied) 
+                    continue;
+                if (fileDiff > 0 && !isDestOccupied) 
+                    continue;
+            }
             if (this->isMoveSafe(start, end))
                 return true;
         }
@@ -483,53 +493,57 @@ bool ChessGame::castlePossible(int startIndex, int endIndex) const {
 }
 
 bool ChessGame::validMove(const int startIndex, const int endIndex) {
+    // Exclude invalid coordinates
     if (!validCoordinates(startIndex) || !validCoordinates(endIndex)) {
         std::cout << "Invalid coordinates entered\n";
         return false;
     }
     
     ChessPiece *piece = this->boardState[startIndex];
-
     if (piece == nullptr) {
         std::cout << "There is no piece at position " << recoverFile(startIndex) << recoverRank(startIndex) << "!\n";
         return false;
-    }
+        }
     if (!validTurn(startIndex))
         return false;
-
-    bool isCastling = (piece->getPieceType() == PieceType::King && std::abs(endIndex - startIndex) == 2);
-
-    if (!isCastling && !piece->canMove(startIndex, endIndex)) {
-        std::cout << piece->getPieceColour() << "'s " << piece->getPieceType() 
-                  << " cannot move to " << recoverFile(endIndex) << recoverRank(endIndex) << "!\n";
-        return false;
-        }
-
     if (!this->noPiecesBetween(startIndex, endIndex, piece)) {
         std::cout << piece->getPieceColour() << "'s "<< piece->getPieceType() << " cannot move to " 
                   << recoverFile(endIndex) << recoverRank(endIndex) << "\n";
         return false;
         }
     
+    // Check for special moves
+    bool isCastling = (piece->getPieceType() == PieceType::King && std::abs(endIndex - startIndex) == 2);
     if (isCastling) {
         return this->castlePossible(startIndex, endIndex);
     }
-    
-    if (piece->getPieceType() == PieceType::Pawn) {
-        int fileDiff = std::abs((endIndex % 8) - (startIndex % 8));
-        bool isDestinationOccupied = (this->boardState[endIndex] != nullptr);
 
+    // Pawns are our other special case because movement != capturing 
+    if (piece->getPieceType() == PieceType::Pawn) {
+        // Since we aren't implementing en passant a piece can move either diagonally to capture or straight 
+        // This means that to move diagonally it needs an occupied destination 
+        int fileDiff = std::abs((endIndex % 8) - (startIndex % 8));
+        
+        // If we aren't changing file, we can't capture a piece 
         if (fileDiff == 0) {
-            if (isDestinationOccupied) {
+            if (this->boardState[endIndex] != nullptr) {
                 return false;
             }
         }
 
         if (fileDiff > 0) {
-            if (!isDestinationOccupied) {
+            if (this->boardState[endIndex] == nullptr || 
+                this->boardState[endIndex]->getPieceColour() == piece->getPieceColour()) {
                 return false;
                 }
             }
+        }
+
+    // If we aren't doing any special moves we check if the piece can move like we want it to
+    if (!piece->canMove(startIndex, endIndex)) {
+        std::cout << piece->getPieceColour() << "'s " << piece->getPieceType() 
+                  << " cannot move to " << recoverFile(endIndex) << recoverRank(endIndex) << "!\n";
+        return false;
         }
     
     if (!canCapture(startIndex, endIndex)) {
@@ -542,7 +556,7 @@ bool ChessGame::validMove(const int startIndex, const int endIndex) {
 
 void ChessGame::commitMove(const int startIndex, const int endIndex) {
     ChessPiece *movingPiece = boardState[startIndex];
-    ChessPiece *capturedPiece = boardState[endIndex];
+    ChessPiece *targetSquare = boardState[endIndex];
 
     // Castling logic - cannot castle and capture at the same time
     if (movingPiece->getPieceType() == PieceType::King &&
@@ -573,10 +587,11 @@ void ChessGame::commitMove(const int startIndex, const int endIndex) {
     std::cout << this->toGo << "'s " << movingPiece->getPieceType() 
             << " moves from " << recoverFile(startIndex) << recoverRank(startIndex)
             << " to " << recoverFile(endIndex) << recoverRank(endIndex);
-    if (capturedPiece != nullptr) {
-        std::cout << " taking " << capturedPiece->getPieceColour() << "'s " << capturedPiece->getPieceType();
-        delete capturedPiece;
-    }
+    
+    if (targetSquare != nullptr) {
+        std::cout << " taking " << targetSquare->getPieceColour() << "'s " << targetSquare->getPieceType();
+        delete targetSquare;
+        } 
 
     if (movingPiece->getPieceType() == PieceType::King) {
         if (this->toGo == PieceColour::w) {
@@ -585,11 +600,11 @@ void ChessGame::commitMove(const int startIndex, const int endIndex) {
             this->blackKingPosition = endIndex;
             }
         }
+
     std::cout << "\n";
     boardState[endIndex] = movingPiece;
     boardState[startIndex] = nullptr;
     movingPiece->setHasMoved(true);
-    
 }
 
 void ChessGame::submitMove(const char *start_position, const char *end_position) {
@@ -604,9 +619,6 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     if (!this->validMove(startIndex, endIndex)) {
         return; 
     }
-    if (!this->canCapture(startIndex, endIndex)){
-        return;
-    }
     // Simulate 
     if (!this->isMoveSafe(startIndex, endIndex)){
         return;
@@ -615,10 +627,8 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     // Commit movement 
     this->commitMove(startIndex, endIndex);
 
-    this->printBoard();
-    // Prepare for next move
-    PieceColour opponent = this->toGo == PieceColour::w ? PieceColour::b : PieceColour::w;
-
+    //this->printBoard();
+    PieceColour opponent = this->toGo == PieceColour::w ? PieceColour::b : PieceColour::w;    
     if (this->isCheckmate(opponent)){
         std::cout << opponent << " is in checkmate\n";
         return;
@@ -627,13 +637,6 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
         std::cout << "Stalemate\n";
         return;
         }
-    
-    int oppKingPos = (opponent == PieceColour::w) ? whiteKingPosition : blackKingPosition;
-    if (kingInCheck(oppKingPos)) {
-        std::cout << "Check!\n";
-    }
-
-    // SWITCH TURN
-    this->toGo = opponent;
+    this->toGo = opponent;    
     return;
 };
