@@ -1,7 +1,7 @@
 chess: ChessMain.o ChessGame.o ChessPieces.o 
 	g++ -Wall -g ChessMain.o ChessGame.o ChessPieces.o -o chess 
 
-ChessMain.o: testing.cpp ChessGame.h ChessPieces.h
+ChessMain.o: ChessMain.cpp ChessGame.h ChessPieces.h
 	g++ -Wall -g -c ChessMain.cpp -o ChessMain.o
 
 ChessGame.o: ChessGame.cpp ChessGame.h
