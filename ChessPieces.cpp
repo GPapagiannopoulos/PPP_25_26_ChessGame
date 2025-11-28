@@ -4,7 +4,7 @@
 #include <tuple>
 #include <unordered_map>
 
-std::ostream& operator<<(std::ostream& out, PieceColour colour) {
+std::ostream &operator<<(std::ostream &out, PieceColour colour) {
     switch(colour){
         case(PieceColour::w):
             return std::cout<<"White";
@@ -15,7 +15,7 @@ std::ostream& operator<<(std::ostream& out, PieceColour colour) {
         } 
 }
 
-std::ostream& operator<<(std::ostream& out, PieceType piece) {
+std::ostream &operator<<(std::ostream &out, PieceType piece) {
     switch(piece){
         case(PieceType::King):
             return std::cout<<"King";
@@ -53,29 +53,30 @@ bool validOrthogonalMovement(const int startIndex, const int endIndex, int limit
     int rankDiff = (endIndex / 8) - (startIndex / 8);
 
     // XOR operation
-    if ((rankDiff != 0) != (fileDiff != 0))
-        return true;
-    if ((rankDiff < limit) && (fileDiff < limit))
+    if ((rankDiff != 0) == (fileDiff != 0))
         return false;
-    return false;        
+    return (std::max(rankDiff, fileDiff) <= limit);       
 }
 
 // ----- BASE -----
-ChessPiece::ChessPiece(const char *_position, PieceColour _colour) {
+ChessPiece::ChessPiece(PieceColour _colour) {
     this->colour = _colour;
-    if (_position) {
-        std::strncpy(this->position, _position, 2);
-    }
-    this->position[2] = '\0';
 }
-
+ChessPiece::~ChessPiece() { }
 PieceColour ChessPiece::getPieceColour() const {
     return this->colour;
 }
+bool ChessPiece::getHasMoved() {
+    return this->hasMoved;
+}
+void ChessPiece::setHasMoved(const bool move) {
+    this->hasMoved = move;
+    return;
+}
 
 // ----- KING -----
-King::King(const char* _position, PieceColour _colour): 
-            ChessPiece(_position, _colour) { };
+King::King(PieceColour _colour): 
+            ChessPiece(_colour) { };
 
 PieceType King::getPieceType() const {return PieceType::King;}
 
@@ -87,8 +88,8 @@ bool King::canMove(const int startIndex, const int endIndex) const {
 }
 
 // ----- QUEEN -----
-Queen::Queen(const char* _position, PieceColour _colour): 
-            ChessPiece(_position, _colour) { };
+Queen::Queen(PieceColour _colour): 
+            ChessPiece(_colour) { };
 
 PieceType Queen::getPieceType() const {return PieceType::Queen;}
 
@@ -100,8 +101,8 @@ bool Queen::canMove(const int startIndex, const int endIndex) const {
 }
 
 // ----- BISHOP -----
-Bishop::Bishop(const char* _position, PieceColour _colour): 
-            ChessPiece(_position, _colour) { };
+Bishop::Bishop(PieceColour _colour): 
+            ChessPiece(_colour) { };
 
 PieceType Bishop::getPieceType() const {return PieceType::Bishop;}
 
@@ -110,21 +111,21 @@ bool Bishop::canMove(const int startIndex, const int endIndex) const {
 }
 
 // ----- KNIGHT -----
-Knight::Knight(const char* _position, PieceColour _colour): 
-            ChessPiece(_position, _colour) { };
+Knight::Knight(PieceColour _colour): 
+            ChessPiece(_colour) { };
 
 PieceType Knight::getPieceType() const {return PieceType::Knight;}
 
 bool Knight::canMove(const int startIndex, const int endIndex) const {
     int fileDiff = std::abs((endIndex % 8) - (startIndex % 8));
-    int rankDiff = std::abs((endIndex / 8) - (endIndex / 8));
+    int rankDiff = std::abs((endIndex / 8) - (startIndex / 8));
 
     return (rankDiff * fileDiff == 2);
 }
 
 // ----- ROOK -----
-Rook::Rook(const char* _position, PieceColour _colour): 
-            ChessPiece(_position, _colour) { };
+Rook::Rook(PieceColour _colour): 
+            ChessPiece(_colour) { };
 
 PieceType Rook::getPieceType() const {return PieceType::Rook;}
 
@@ -133,26 +134,39 @@ bool Rook::canMove(const int startIndex, const int endIndex) const {
 }
 
 // ----- PAWN -----
-Pawn::Pawn(const char* _position, PieceColour _colour): 
-            ChessPiece(_position, _colour) { };
+Pawn::Pawn(PieceColour _colour): 
+            ChessPiece(_colour) { };
 
 PieceType Pawn::getPieceType() const {return PieceType::Pawn;}
 
 bool Pawn::canMove(const int startIndex, const int endIndex) const {
-    int fileDiff = std::abs((endIndex % 8) - (startIndex % 8));
-    int rankDiff = (endIndex / 8) - (startIndex /8); 
+    int direction = colour == PieceColour::w? 1 : -1;
+    int startingRank = colour == PieceColour::w? 1 : 6;
+    
+    int startRank = startIndex / 8;
+    int startFile = startIndex % 8;
+    int endRank = endIndex / 8;
+    int endFile = endIndex % 8;
 
-    if (colour == PieceColour::w) {
-        if (rankDiff < 1 || rankDiff > 2) return false; 
-    } else {
-        if (rankDiff > -1 || rankDiff < -2) return false; 
+    int fileDiff = std::abs(endFile - startFile);
+    int rankDiff = endRank - startRank;
+
+    if (fileDiff == 0) {
+        if (rankDiff == direction) {
+            return true;
+        }
+        if (rankDiff == (2 * direction) && startRank == startingRank) {
+            return true;
+        }
+        return false;
     }
 
-    int forwardSteps = std::abs(rankDiff);
-
-    if (forwardSteps == 2) {
-        return (!hasMoved) && (fileDiff == 0); 
+    if (fileDiff == 1) {
+        if (rankDiff == direction) {
+            return true;
+        }
+        return false;
     }
 
-    return (forwardSteps == 1) && (fileDiff <= 1);
+    return false;
 }
