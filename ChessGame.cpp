@@ -212,14 +212,12 @@ void ChessGame::loadState(std::string fen) {
     return;
 }
 
-// Helper function for submitMove 
-bool validCoordinates(int index) {
+bool validCoordinates(const int index) {
     if (index < 0 || index >= 64)
         return false;
     return true;
 }
 
-// Helper function for submitMove
 bool ChessGame::validTurn(const int index) const {
     ChessPiece *piece = this->boardState[index];
     if (piece->getPieceColour() == this->toGo) {
@@ -229,7 +227,17 @@ bool ChessGame::validTurn(const int index) const {
     return false;
 }
 
+bool ChessGame::piecePresent(const int index) const {
+    ChessPiece *piece = this->boardState[index];
+
+    if (piece == nullptr) {
+        return false;
+    }
+    return true;
+}
+
 bool ChessGame::noPiecesBetween(const int startIndex, const int endIndex, const ChessPiece *piece) const {
+
     if (piece->getPieceType() == PieceType::Knight)
         return true;
     
@@ -248,7 +256,7 @@ bool ChessGame::noPiecesBetween(const int startIndex, const int endIndex, const 
     return true;
 } 
 
-bool ChessGame::canCapture(const int startIndex, const int endIndex) {
+bool ChessGame::canCapture(const int startIndex, const int endIndex) const {
     ChessPiece *movingPiece = this->boardState[startIndex];
     ChessPiece *targetLocation = this->boardState[endIndex];
 
@@ -345,103 +353,13 @@ bool ChessGame::locationUnderAttack(const int index, const PieceColour colour) c
     return false;
 }
 
-bool ChessGame::kingInCheck(const int kingCoordinates) {
+bool ChessGame::kingInCheck(const int kingCoordinates) const {
     PieceColour kingColour = this->boardState[kingCoordinates]->getPieceColour();
     
     return this->locationUnderAttack(kingCoordinates, kingColour);
 }
 
-// BUG BUG BUG BUG 
-bool ChessGame::isMoveSafe(const int startIndex, const int endIndex) {
-    ChessPiece* movingPiece = boardState[startIndex];
-    ChessPiece* capturedPiece = boardState[endIndex];
-    
-    int originalKingPos = (movingPiece->getPieceColour() == PieceColour::w) ? whiteKingPosition : blackKingPosition;
-    int currentKingPos = originalKingPos;
-    
-    if (movingPiece->getPieceType() == PieceType::King) {
-        currentKingPos = endIndex;
-        if (movingPiece->getPieceColour() == PieceColour::w) 
-            whiteKingPosition = endIndex;
-        else 
-            blackKingPosition = endIndex;
-    }
-
-    boardState[endIndex] = movingPiece;
-    boardState[startIndex] = nullptr;
-
-    bool safe = !kingInCheck(currentKingPos);
-
-    boardState[startIndex] = movingPiece;
-    boardState[endIndex] = capturedPiece;
-    
-    if (movingPiece->getPieceColour() == PieceColour::w) 
-        whiteKingPosition = originalKingPos;
-    else 
-        blackKingPosition = originalKingPos;
-
-    return safe;
-}
-
-bool ChessGame::hasLegalMoves(const PieceColour colour) {
-    for (int start = 0; start < 64; start++) {
-        ChessPiece* piece = this->boardState[start];
-        
-        if (piece == nullptr || piece->getPieceColour() != colour) 
-            continue;
-
-        for (int end = 0; end < 64; end++) {
-            if (start == end) 
-                continue;
-            if (!piece->canMove(start, end)) 
-                continue;
-            
-            if (!noPiecesBetween(start, end, piece)) 
-                continue;
-
-            if (this->boardState[end] != nullptr && 
-                this->boardState[end]->getPieceColour() == colour) 
-                continue;
-            if (piece->getPieceType() == PieceType::Pawn) {
-                int fileDiff = std::abs((end % 8) - (start % 8));
-                bool isDestOccupied = (this->boardState[end] != nullptr);
-
-                if (fileDiff == 0 && isDestOccupied) 
-                    continue;
-                if (fileDiff > 0 && !isDestOccupied) 
-                    continue;
-            }
-            if (this->isMoveSafe(start, end))
-                return true;
-        }
-    }
-    return false;
-}
-
-bool ChessGame::isCheckmate(PieceColour colour) {
-    int kingPos = (colour == PieceColour::w) ? whiteKingPosition : blackKingPosition;
-
-    if (!this->kingInCheck(kingPos)) 
-        return false;
-    
-    if (hasLegalMoves(colour)) {
-        std::cout << colour << " is in check\n";
-        return false;
-    } else {
-        return true;
-    };
-}
-
-bool ChessGame::isStalemate(PieceColour colour) {
-    int kingPos = (colour == PieceColour::w) ? whiteKingPosition : blackKingPosition;
-
-    if (kingInCheck(kingPos)) 
-        return false;
-
-    return !hasLegalMoves(colour);
-}
-
-bool ChessGame::castlePossible(int startIndex, int endIndex) const {
+bool ChessGame::castlePossible(const int startIndex, const int endIndex) const {
     ChessPiece* king = boardState[startIndex];
     
     if (king->getPieceType() != PieceType::King) 
@@ -499,13 +417,15 @@ bool ChessGame::validMove(const int startIndex, const int endIndex) {
         return false;
     }
     
-    ChessPiece *piece = this->boardState[startIndex];
-    if (piece == nullptr) {
+    if (!piecePresent(startIndex)) {
         std::cout << "There is no piece at position " << recoverFile(startIndex) << recoverRank(startIndex) << "!\n";
         return false;
         }
+
+    ChessPiece *piece = this->boardState[startIndex];
     if (!validTurn(startIndex))
         return false;
+
     if (!this->noPiecesBetween(startIndex, endIndex, piece)) {
         std::cout << piece->getPieceColour() << "'s "<< piece->getPieceType() << " cannot move to " 
                   << recoverFile(endIndex) << recoverRank(endIndex) << "\n";
@@ -552,6 +472,37 @@ bool ChessGame::validMove(const int startIndex, const int endIndex) {
     }
 
     return true;
+}
+
+bool ChessGame::isMoveSafe(const int startIndex, const int endIndex) {
+    ChessPiece* movingPiece = boardState[startIndex];
+    ChessPiece* capturedPiece = boardState[endIndex];
+    
+    int originalKingPos = (movingPiece->getPieceColour() == PieceColour::w) ? whiteKingPosition : blackKingPosition;
+    int currentKingPos = originalKingPos;
+    
+    if (movingPiece->getPieceType() == PieceType::King) {
+        currentKingPos = endIndex;
+        if (movingPiece->getPieceColour() == PieceColour::w) 
+            whiteKingPosition = endIndex;
+        else 
+            blackKingPosition = endIndex;
+    }
+
+    boardState[endIndex] = movingPiece;
+    boardState[startIndex] = nullptr;
+
+    bool safe = !kingInCheck(currentKingPos);
+
+    boardState[startIndex] = movingPiece;
+    boardState[endIndex] = capturedPiece;
+    
+    if (movingPiece->getPieceColour() == PieceColour::w) 
+        whiteKingPosition = originalKingPos;
+    else 
+        blackKingPosition = originalKingPos;
+
+    return safe;
 }
 
 void ChessGame::commitMove(const int startIndex, const int endIndex) {
@@ -607,6 +558,65 @@ void ChessGame::commitMove(const int startIndex, const int endIndex) {
     movingPiece->setHasMoved(true);
 }
 
+bool ChessGame::hasLegalMoves(const PieceColour colour) {
+    for (int start = 0; start < 64; start++) {
+        ChessPiece* piece = this->boardState[start];
+        
+        if (piece == nullptr || piece->getPieceColour() != colour) 
+            continue;
+
+        for (int end = 0; end < 64; end++) {
+            if (start == end) 
+                continue;
+            if (!piece->canMove(start, end)) 
+                continue;
+            
+            if (!noPiecesBetween(start, end, piece)) 
+                continue;
+
+            if (this->boardState[end] != nullptr && 
+                this->boardState[end]->getPieceColour() == colour) 
+                continue;
+
+            if (piece->getPieceType() == PieceType::Pawn) {
+                int fileDiff = std::abs((end % 8) - (start % 8));
+                bool isDestOccupied = (this->boardState[end] != nullptr);
+
+                if (fileDiff == 0 && isDestOccupied) 
+                    continue;
+                if (fileDiff > 0 && !isDestOccupied) 
+                    continue;
+            }
+            if (this->isMoveSafe(start, end))
+                return true;
+        }
+    }
+    return false;
+}
+
+bool ChessGame::isCheckmate(PieceColour colour) {
+    int kingPos = (colour == PieceColour::w) ? whiteKingPosition : blackKingPosition;
+
+    if (!this->kingInCheck(kingPos)) 
+        return false;
+    
+    if (hasLegalMoves(colour)) {
+        std::cout << colour << " is in check\n";
+        return false;
+    } else {
+        return true;
+    };
+}
+
+bool ChessGame::isStalemate(PieceColour colour) {
+    int kingPos = (colour == PieceColour::w) ? whiteKingPosition : blackKingPosition;
+
+    if (kingInCheck(kingPos)) 
+        return false;
+
+    return !hasLegalMoves(colour);
+}
+
 void ChessGame::submitMove(const char *start_position, const char *end_position) {
     int startIndex = flattenCoordinates(start_position);
     int endIndex = flattenCoordinates(end_position);
@@ -627,7 +637,6 @@ void ChessGame::submitMove(const char *start_position, const char *end_position)
     // Commit movement 
     this->commitMove(startIndex, endIndex);
 
-    //this->printBoard();
     PieceColour opponent = this->toGo == PieceColour::w ? PieceColour::b : PieceColour::w;    
     if (this->isCheckmate(opponent)){
         std::cout << opponent << " is in checkmate\n";
