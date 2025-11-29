@@ -1,3 +1,7 @@
+#ifndef CHESSGAME_H
+#define CHESSGAME_H
+
+
 #include <string>
 
 // Forward declarations 
@@ -211,3 +215,5 @@ class ChessGame {
          */
         void submitMove(const char *startPosition,const char *endPosition);
     };
+
+#endif

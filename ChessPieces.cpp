@@ -1,5 +1,6 @@
 #include "ChessPieces.h"
 #include "ChessGame.h"
+
 #include <cstring>
 #include <tuple>
 #include <unordered_map>
@@ -7,34 +8,40 @@
 std::ostream &operator<<(std::ostream &out, PieceColour colour) {
     switch(colour){
         case(PieceColour::w):
-            return std::cout<<"White";
+            return out<<"White";
         case(PieceColour::b):
-            return std::cout<<"Black";
+            return out<<"Black";
         default:
-            return std::cout<<"That is not a valid colour!\n";
+            return out<<"That is not a valid colour!\n";
         } 
 }
 
 std::ostream &operator<<(std::ostream &out, PieceType piece) {
     switch(piece){
         case(PieceType::King):
-            return std::cout<<"King";
+            return out<<"King";
         case(PieceType::Queen):
-            return std::cout<<"Queen";
+            return out<<"Queen";
         case(PieceType::Bishop):
-            return std::cout<<"Bishop";
+            return out<<"Bishop";
         case(PieceType::Knight):
-            return std::cout<<"Knight";
+            return out<<"Knight";
         case(PieceType::Rook):
-            return std::cout<<"Rook";
+            return out<<"Rook";
         case(PieceType::Pawn):
-            return std::cout<<"Pawn";
+            return out<<"Pawn";
         default:
-            return std::cout<<"That is not a chess piece!\n";
+            return out<<"That is not a chess piece!\n";
         } 
 }
 
-// Helper function for valid diagonal movement 
+/**
+ * @brief helper function for canMove
+ * Validates that the movement of a piece is strictly on a diagonal 
+ * @param startIndex the starting sqaure of the piece converted to the index of the 1D array boardState
+ * @param endIndex the ending sqaure of the piece converted to the index of the 1D array boardState
+ * @return true if the movement is STRICTLY on a diagonal, otherwise false 
+ */
 bool validDiagonalMovement(const int startIndex, const int endIndex, int limit) {
     // Diagonal movement is equidistant from the x and y axis 
     int fileDiff = (endIndex % 8) - (startIndex % 8);
@@ -47,7 +54,13 @@ bool validDiagonalMovement(const int startIndex, const int endIndex, int limit) 
     return true;
 }
 
-// Helper function for valid horizontal movement 
+/**
+ * @brief helper function for canMove
+ * Validates that the movement of a piece is strictly along one axis  
+ * @param startIndex the starting sqaure of the piece converted to the index of the 1D array boardState
+ * @param endIndex the ending sqaure of the piece converted to the index of the 1D array boardState
+ * @return true if the movement is STRICTLY on one axis, otherwise false 
+ */
 bool validOrthogonalMovement(const int startIndex, const int endIndex, int limit) {
     int fileDiff = (endIndex % 8) - (startIndex % 8);
     int rankDiff = (endIndex / 8) - (startIndex / 8);
@@ -57,7 +70,8 @@ bool validOrthogonalMovement(const int startIndex, const int endIndex, int limit
     return (std::max(std::abs(rankDiff), std::abs(fileDiff)) <= limit);       
 }
 
-// ----- BASE -----
+// Generic Chess Piece  
+//----------------------------------------
 ChessPiece::ChessPiece(PieceColour _colour) {
     this->colour = _colour;
 }
@@ -65,7 +79,7 @@ ChessPiece::~ChessPiece() { }
 PieceColour ChessPiece::getPieceColour() const {
     return this->colour;
 }
-bool ChessPiece::getHasMoved() {
+bool ChessPiece::getHasMoved() const{
     return this->hasMoved;
 }
 void ChessPiece::setHasMoved(const bool move) {
@@ -73,7 +87,8 @@ void ChessPiece::setHasMoved(const bool move) {
     return;
 }
 
-// ----- KING -----
+// King 
+//----------------------------------------
 King::King(PieceColour _colour): 
             ChessPiece(_colour) { };
 
@@ -86,7 +101,8 @@ bool King::canMove(const int startIndex, const int endIndex) const {
     return (diagMov || horMov);
 }
 
-// ----- QUEEN -----
+// Queen 
+//----------------------------------------
 Queen::Queen(PieceColour _colour): 
             ChessPiece(_colour) { };
 
@@ -99,7 +115,8 @@ bool Queen::canMove(const int startIndex, const int endIndex) const {
     return (diagMov || horMov);
 }
 
-// ----- BISHOP -----
+// Bishop
+//----------------------------------------
 Bishop::Bishop(PieceColour _colour): 
             ChessPiece(_colour) { };
 
@@ -109,7 +126,8 @@ bool Bishop::canMove(const int startIndex, const int endIndex) const {
     return validDiagonalMovement(startIndex, endIndex, this->movement_limit);
 }
 
-// ----- KNIGHT -----
+// Knight
+//----------------------------------------
 Knight::Knight(PieceColour _colour): 
             ChessPiece(_colour) { };
 
@@ -130,7 +148,8 @@ bool Knight::canMove(const int startIndex, const int endIndex) const {
            (fileDiff == 2 && rankDiff == 1);
 }
 
-// ----- ROOK -----
+// Rook 
+//----------------------------------------
 Rook::Rook(PieceColour _colour): 
             ChessPiece(_colour) { };
 
@@ -140,7 +159,8 @@ bool Rook::canMove(const int startIndex, const int endIndex) const {
     return (validOrthogonalMovement(startIndex, endIndex, this->movement_limit));
 }
 
-// ----- PAWN -----
+// Pawn 
+//----------------------------------------
 Pawn::Pawn(PieceColour _colour): 
             ChessPiece(_colour) { };
 

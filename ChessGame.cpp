@@ -4,10 +4,20 @@
 #include <vector>
 #include <iostream>
 #include <string>
-// ----- HELPER FUNCTIONS -----
 
-// Helper function for determining coordinates 
+//----------------------------------------
+// Helper Functions 
+//----------------------------------------
+
+/**
+ * @brief converts standard chess coordinates to a 1D index 
+ * Converts the coordinate string to an integer for faster array indexing 
+ * To match indexing we use (file - 'A') * 8 + (file - '1')
+ * @param coordinates C style string containing the coordinates of the square 
+ * @return index (0 <= index < 64)
+ */
 int flattenCoordinates(const char *coordinates) {
+    // Checking for valid coordinates as it is used outside the main submitMove call
     if (!coordinates) 
         return -1;
     
@@ -20,16 +30,34 @@ int flattenCoordinates(const char *coordinates) {
     return (rank * 8) + file;
 }
 
+/**
+ * @brief reverses the flattening operation of flattenCoordinates
+ * Used in combination with recoverFile to compute coordinates from the index 
+ * @param index the index of the 1D array stateBoard 
+ * @return a character '1' - '8' indicating the rank 
+ */
 char recoverRank(const int index) {
     int rankIndex = index / 8;
     return rankIndex + '1'; 
 }
 
+/**
+ * @brief reverses the flattening operation of flattenCoordinates 
+ * Used in combination with recoverFile to compute coordinates from the index 
+ * @param index the index of the 1D array stateBoard 
+ * @return a character 'A' - 'H' indicating the file 
+ */
 char recoverFile(const int index) {
     int fileIndex = index % 8;
     return fileIndex + 'A'; 
 }
 
+/**
+ * @brief converts the character in the FEN string into a PieceColour variable 
+ * Used in determining player turn from the FEN string 
+ * @param colour a singlee char depicting player turn 
+ * @return a PieceColour variable showing whose turn it is 
+ */
 PieceColour convertColour(const char* colour) {
     if (colour[0] == 'w') {
         return PieceColour::w;
@@ -38,8 +66,16 @@ PieceColour convertColour(const char* colour) {
         }
     }
 
-// Helper function for loadState
-ChessPiece *placePiece(char piece) {
+/**
+ * @brief initializes new ChessPiece class variables 
+ * Used to populate the board with pieces depending on the text in the FEN string
+ * Only considers Piece colour and type. Coordinates are not stored in the pieces themselves
+ * Ensuring only valid characters are passed is handled by loadState. Passing an invalid code 
+ * return a nullptr  
+ * @param piece a single character indicating the piece and colour
+ * @return ChessPiece * to a derived class  
+ */
+ChessPiece *placePiece(const char piece) {
     
     PieceColour colour = isupper(piece)? PieceColour::w : PieceColour::b;
 
@@ -62,7 +98,14 @@ ChessPiece *placePiece(char piece) {
         }
 }
 
-// Helper function for loadState
+/**
+ * @brief helper function for loadState
+ * Splits a string along a delimiter. If no delimiter is found returns the original string 
+ * in a vector.
+ * @param string_to_parse 
+ * @param delimiter 
+ * @return a vector of the substrings spliced at the delimiters found 
+ */
 std::vector<std::string> splitString(std::string string_to_parse, char delimiter) {
     std::vector<std::string> substrings;
     std::string substring;
@@ -81,7 +124,10 @@ std::vector<std::string> splitString(std::string string_to_parse, char delimiter
     return substrings;
 }
 
-// ----- CHESS GAME -----
+//----------------------------------------
+// ChessGame Methods 
+//----------------------------------------
+
 ChessGame::ChessGame() { 
     this->validBoard = false;
     this->blackKingPosition = -1;
