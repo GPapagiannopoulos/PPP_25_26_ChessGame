@@ -1,8 +1,8 @@
-testing: testing.o ChessGame.o ChessPieces.o 
-	g++ -Wall -g testing.o ChessGame.o ChessPieces.o -o testing 
+chess: ChessMain.o ChessGame.o ChessPieces.o 
+	g++ -Wall -g ChessMain.o ChessGame.o ChessPieces.o -o chess 
 
-testing.o: testing.cpp ChessGame.h ChessPieces.h
-	g++ -Wall -g -c testing.cpp -o testing.o
+ChessMain.o: ChessMain.cpp ChessGame.h ChessPieces.h
+	g++ -Wall -g -c ChessMain.cpp -o ChessMain.o
 
 ChessGame.o: ChessGame.cpp ChessGame.h
 	g++ -Wall -g -c ChessGame.cpp -o ChessGame.o
